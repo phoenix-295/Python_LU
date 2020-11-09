@@ -1,0 +1,15 @@
+Finder program
+# Dict, list, queue# directory --- os.walk()
+
+list1 = [c:, d:, e:]
+
+dict1 = {}
+
+
+def func(drive)
+
+
+resp = os.walk(drive)
+statem1
+st
+dict1[file] = path
