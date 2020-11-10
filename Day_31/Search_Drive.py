@@ -5,7 +5,7 @@ import argparse
 import pickle
 from threading import Thread
 
-t1 = time.time()
+
 dict1 = {}
 i = 1
 
@@ -52,6 +52,7 @@ def create_Index1():
 
 
 def search(file1):
+    t1 = time.time()
     fr = open("finder_index", "rb")
     data1 = pickle.load(fr)
     fr.close()
@@ -60,6 +61,8 @@ def search(file1):
         m = re.search(file1, k, re.I)
         if m:
             print(k, "\t", v)
+    t2 = time.time()
+    print("Total time to search :", t2-t1)
 
 
 def main():
