@@ -32,6 +32,7 @@ def creating_Dict(dr):
 
 def create_Index1():
     tnow = time.time()
+    print("Creating Index...")
     list1_th = []
     list1 = get_drives()
     for each in list1:
@@ -42,7 +43,8 @@ def create_Index1():
 
     for th1 in list1_th:
         th1.join()
-
+    file_path = os.path.expanduser('~')
+    os.chdir(file_path)
     fw = open("finder_index", "wb")
     pickle.dump(dict1, fw)
     fw.close()
@@ -50,8 +52,10 @@ def create_Index1():
     print("Time taken to Create Index :", t2-tnow)
 
 
-def search(file1):
+def search(file1, drive=None, folder_f=None):
     t1 = time.time()
+    file_path = os.path.expanduser('~')
+    os.chdir(file_path)
     fr = open("finder_index", "rb")
     data1 = pickle.load(fr)
     fr.close()
@@ -66,24 +70,44 @@ def search(file1):
             str1 = data1[k]
             list1.append(str1)
     list1.sort()
+
+    if drive:
+        drive = drive[0]
+        print("drive", drive)
+        list1 = [each for each in list1 if each.startswith(drive)]
+
     if list1:
         list3 = []
         for each in list1:
-            if each.endswith(">"):
+            if folder_f:
+                if each.endswith(">"):
+                    list3.append(each)
+                else:
+                    pass
+                list1 = list3
+    for index, item in enumerate(list1):
+        if folder_f:
+            if item.endswith(">"):
+                print(Fore.WHITE + " ", index + 1, " ",
+                      item.split("|")[0].rstrip(">"))
+                print(Fore.YELLOW + "-"*90)
+            else:
+                pass
+        else:
+            if item.endswith(">"):
                 pass
             else:
-                list3.append(each)
-        list1 = list3
-    for index, item in enumerate(list1):
-        str1 = item.rsplit("\\")
-        print(Fore.WHITE+"", index + 1, " ", item.split("|")[0])
-        print(Fore.YELLOW + "-"*90)
+                print(Fore.WHITE+"", index + 1, " ", item.split("|")[0])
+                print(Fore.YELLOW + "-"*90)
 
     t2 = time.time()
     print(Fore.GREEN + Style.BRIGHT + "Total time to search :", t2-t1)
     print("Total files are", len(list1))
     print()
-    print("Press F to open File or D to open Directory")
+    if folder_f:
+        print("Press D to open Directory")
+    else:
+        print("Press F to open File or D to open Directory")
     cho = input()
     cho = cho.lower()
     if cho == 'f':
@@ -91,56 +115,21 @@ def search(file1):
         num = int(input())
         file_open(list1[num - 1])
     elif cho == 'd':
-        print(Fore.WHITE + "Enter Number :")
-        num = int(input())
-        dir_open2(list1[num - 1])
 
-
-def search_folder(file1):
-    t1 = time.time()
-    fr = open("finder_index", "rb")
-    data1 = pickle.load(fr)
-    fr.close()
-    folder_to_be_searched = file1.lower()
-    list1 = []
-    print("")
-    print(Fore.GREEN + "All files :")
-    print("")
-    for k in data1:
-        if re.search(folder_to_be_searched, k):
-            str1 = data1[k]  # + "/" + k.split("|")[0]
-            list1.append(str1)
-    list1.sort()
-    if list1:
-        list3 = []
-        if True:
-            for each in list1:
-                if each.endswith(">"):
-                    list3.append(each)
-                list1 = list3
-        for index, item in enumerate(list1):
-            if item.endswith(">"):
-                print(Fore.WHITE + " ", index + 1, " ",
-                      item.split("|")[0].rstrip(">"))
-                print(Fore.YELLOW + "-"*90)
-            else:
-                print(Fore.WHITE + " ", index + 1, " ", item.split("|")[0])
-                print(Fore.YELLOW + "-"*90)
-    t2 = time.time()
-    print(Fore.GREEN + Style.BRIGHT + "Total time to search :", t2-t1)
-    print("Total Folders are", len(list1))
-    if len(list1) == 0:
-        sys.exit()
-    print()
-    print(Fore.WHITE + "Enter Number :")
-    num = int(input())
-    dir_open(list1[num - 1])
+        if folder_f:
+            print(Fore.WHITE + "Enter Number :")
+            num = int(input())
+            dir_open(list1[num - 1])
+        else:
+            print(Fore.WHITE + "Enter Number :")
+            num = int(input())
+            dir_open2(list1[num - 1])
 
 
 def dir_open(path1):
     folder_path = path1.split(">")[0]
     os.chdir(folder_path)
-    subprocess.Popen(r'explorer /E,"." ')
+    subprocess.Popen(r'explorer /E/select,"." ')
 
 
 def dir_open2(path):
@@ -148,7 +137,7 @@ def dir_open2(path):
     k3 = "\\"
     k3 = k3.join(file1)
     os.chdir(k3)
-    subprocess.Popen(r'explorer /E,"." ')
+    subprocess.Popen(r'explorer /E/select,"." ')
 
 
 def file_open(path):
@@ -165,22 +154,28 @@ def main():
     parser.add_argument("file_name", nargs='?')
     parser.add_argument("-c", help="Used to build index", action='store_true')
     parser.add_argument(
-        "-f", nargs=1, help="Takes one argument as <folder_name>")
+        "-f", help="Takes one argument as <folder_name>", action='store_true')
+    parser.add_argument(
+        '-d', nargs=2, help='Filter by drive,finder -d <file-name> drive_name')
     args = parser.parse_args()
     try:
         if args.c:
             create_Index1()
-        elif args.f:
-            search_folder(args.f[0])
+        # elif args.f:
+        #     search_folder(args.f[0])
+        elif args.d:
+            search(args.d[0], args.d[1], args.f)
         else:
             if args.file_name == "" or args.file_name == None:
                 print("Please enter a valid file name")
             else:
-                fr = open("finder_index", "rb")
-                if fr == False:
+                file_path = os.path.expanduser('~')
+                os.chdir(file_path)
+                try:
+                    fr = open("finder_index", "rb")
+                except IOError:
                     create_Index1()
-                else:
-                    search(args.file_name)
+                search(args.file_name, folder_f=args.f)
     except Exception as e:
         print(e)
 
